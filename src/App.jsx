@@ -1,12 +1,9 @@
 import React, { useMemo, useState } from "react";
 import "katex/dist/katex.min.css";
 import katex from "katex";
-
 import { exerciseSets } from "./data/exerciseSets";
 
 const PI_DIGITS = "314159265358979323846264338327950288419716939937510";
-
-
 
 function MathBlock({ math }) {
   let html;
@@ -77,16 +74,30 @@ function piEncrypt(plainText) {
   return output;
 }
 
+function resultToCode(result) {
+  if (result === true) return "1";
+  if (result === false) return "0";
+  if (result === "skipped") return "S";
+  return "N";
+}
+
+function resultToText(result) {
+  if (result === true) return "yes";
+  if (result === false) return "no";
+  if (result === "skipped") return "skipped";
+  return "not attempted";
+}
+
 function makeResultText(setTitle, results) {
   const now = new Date();
   const date = now.toLocaleDateString("en-GB");
   const time = now.toLocaleTimeString("en-GB");
-  const compact = results.map((r) => (r ? "1" : "0")).join(",");
+  const compact = results.map(resultToCode).join(",");
   const plain = `${setTitle}|${date}|${time}|${compact}`;
   const encrypted = piEncrypt(plain);
 
   return `Math Trainer Results\n\nDate: ${date}\nTime: ${time}\nSet: ${setTitle}\n\n${results
-    .map((r, i) => `Question ${i + 1}: ${r ? "yes" : "no"}`)
+    .map((result, i) => `Question ${i + 1}: ${resultToText(result)}`)
     .join("\n")}\n\nMATHCHECK: ${encrypted}`;
 }
 
@@ -110,6 +121,7 @@ export default function App() {
   );
 
   const [started, setStarted] = useState(false);
+  const [finished, setFinished] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [attempts, setAttempts] = useState(0);
   const [inputs, setInputs] = useState({});
@@ -117,25 +129,39 @@ export default function App() {
   const [feedback, setFeedback] = useState("");
   const [showHelp, setShowHelp] = useState(false);
 
-  const finished = started && currentIndex >= selectedSet.exercises.length;
-  const currentExercise = finished ? null : selectedSet.exercises[currentIndex];
+  const currentExercise = started && !finished ? selectedSet.exercises[currentIndex] : null;
 
   function startSet() {
     setStarted(true);
+    setFinished(false);
     setCurrentIndex(0);
     setAttempts(0);
     setInputs({});
-    setResults([]);
+    setResults(new Array(selectedSet.exercises.length).fill(null));
     setFeedback("");
     setShowHelp(false);
   }
 
-  function nextExercise() {
-    setCurrentIndex((old) => old + 1);
-    setAttempts(0);
+  function goToNextQuestion() {
+    const nextIndex = currentIndex + 1;
     setInputs({});
+    setAttempts(0);
     setFeedback("");
     setShowHelp(false);
+
+    if (nextIndex >= selectedSet.exercises.length) {
+      setFinished(true);
+    } else {
+      setCurrentIndex(nextIndex);
+    }
+  }
+
+  function updateResult(questionIndex, value) {
+    setResults((old) => {
+      const copy = [...old];
+      copy[questionIndex] = value;
+      return copy;
+    });
   }
 
   function continueExercise() {
@@ -154,9 +180,9 @@ export default function App() {
     }
 
     if (correct) {
-      setResults((old) => [...old, true]);
+      updateResult(currentIndex, true);
       setFeedback("Correct!");
-      setTimeout(nextExercise, 650);
+      setTimeout(goToNextQuestion, 650);
       return;
     }
 
@@ -167,10 +193,19 @@ export default function App() {
       return;
     }
 
-    setResults((old) => [...old, false]);
-    setFeedback("The solution is shown below. Moving to the next question...");
+    updateResult(currentIndex, false);
+    setFeedback("The worked solution is shown below. Moving to the next question...");
     setShowHelp(true);
-    setTimeout(nextExercise, 1800);
+    setTimeout(goToNextQuestion, 2200);
+  }
+
+  function skipExercise() {
+    updateResult(currentIndex, "skipped");
+    goToNextQuestion();
+  }
+
+  function endSession() {
+    setFinished(true);
   }
 
   function downloadResults() {
@@ -189,10 +224,10 @@ export default function App() {
         </header>
 
         {!started && (
-          <main style={{ background: "white", borderRadius: "28px", padding: "32px", boxShadow: "0 10px 30px rgba(15,23,42,0.12)" }}>
+          <main style={cardStyle}>
             <h2 style={{ fontSize: "26px", fontWeight: "700", marginBottom: "16px" }}>Choose an exercise set</h2>
             <select
-              style={{ width: "100%", border: "1px solid #cbd5e1", borderRadius: "14px", padding: "14px", fontSize: "18px", marginBottom: "24px" }}
+              style={selectStyle}
               value={selectedSetId}
               onChange={(event) => setSelectedSetId(event.target.value)}
             >
@@ -213,7 +248,7 @@ export default function App() {
         )}
 
         {started && !finished && currentExercise && (
-          <main style={{ background: "white", borderRadius: "28px", padding: "32px", boxShadow: "0 10px 30px rgba(15,23,42,0.12)" }}>
+          <main style={cardStyle}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", gap: "16px" }}>
               <div>
                 <p style={{ color: "#64748b", fontSize: "14px" }}>{selectedSet.title}</p>
@@ -240,7 +275,7 @@ export default function App() {
                 <label key={field} style={{ display: "flex", alignItems: "center", gap: "16px", fontSize: "20px" }}>
                   <span style={{ width: "56px", fontWeight: "800" }}>{field} =</span>
                   <input
-                    style={{ border: "1px solid #cbd5e1", borderRadius: "14px", padding: "14px", fontSize: "20px", flex: 1 }}
+                    style={inputStyle}
                     value={inputs[field] || ""}
                     onChange={(event) => setInputs((old) => ({ ...old, [field]: event.target.value }))}
                     onKeyDown={(event) => {
@@ -265,23 +300,29 @@ export default function App() {
               </section>
             )}
 
-            <button onClick={continueExercise} style={primaryButtonStyle}>Continue</button>
+            <div style={{ display: "grid", gap: "12px" }}>
+              <button onClick={continueExercise} style={primaryButtonStyle}>Continue</button>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <button onClick={skipExercise} style={secondaryWideButtonStyle}>Skip exercise</button>
+                <button onClick={endSession} style={dangerButtonStyle}>End & get results</button>
+              </div>
+            </div>
           </main>
         )}
 
-        {finished && (
-          <main style={{ background: "white", borderRadius: "28px", padding: "32px", boxShadow: "0 10px 30px rgba(15,23,42,0.12)" }}>
+        {started && finished && (
+          <main style={cardStyle}>
             <h2 style={{ fontSize: "34px", fontWeight: "800", marginBottom: "8px" }}>Summary</h2>
             <p style={{ color: "#475569", marginBottom: "24px" }}>
-              Score: {results.filter(Boolean).length} / {results.length}
+              Correct: {results.filter((r) => r === true).length} / {results.length}
             </p>
 
             <div style={{ display: "grid", gap: "12px", marginBottom: "32px" }}>
               {results.map((result, index) => (
                 <div key={index} style={{ display: "flex", justifyContent: "space-between", border: "1px solid #e2e8f0", borderRadius: "14px", padding: "16px", background: "#f8fafc" }}>
                   <span>Question {index + 1}</span>
-                  <span style={{ color: result ? "#16a34a" : "#dc2626", fontWeight: "800" }}>
-                    {result ? "yes" : "no"}
+                  <span style={{ color: resultColor(result), fontWeight: "800" }}>
+                    {resultToText(result)}
                   </span>
                 </div>
               ))}
@@ -295,6 +336,37 @@ export default function App() {
     </div>
   );
 }
+
+function resultColor(result) {
+  if (result === true) return "#16a34a";
+  if (result === false) return "#dc2626";
+  if (result === "skipped") return "#d97706";
+  return "#64748b";
+}
+
+const cardStyle = {
+  background: "white",
+  borderRadius: "28px",
+  padding: "32px",
+  boxShadow: "0 10px 30px rgba(15,23,42,0.12)",
+};
+
+const selectStyle = {
+  width: "100%",
+  border: "1px solid #cbd5e1",
+  borderRadius: "14px",
+  padding: "14px",
+  fontSize: "18px",
+  marginBottom: "24px",
+};
+
+const inputStyle = {
+  border: "1px solid #cbd5e1",
+  borderRadius: "14px",
+  padding: "14px",
+  fontSize: "20px",
+  flex: 1,
+};
 
 const primaryButtonStyle = {
   width: "100%",
@@ -323,6 +395,12 @@ const secondaryButtonStyle = {
 const secondaryWideButtonStyle = {
   ...secondaryButtonStyle,
   width: "100%",
-  padding: "18px 24px",
-  fontSize: "20px",
+  padding: "16px 20px",
+  fontSize: "18px",
+};
+
+const dangerButtonStyle = {
+  ...secondaryWideButtonStyle,
+  background: "#fee2e2",
+  color: "#991b1b",
 };
