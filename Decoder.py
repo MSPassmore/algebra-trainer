@@ -27,6 +27,21 @@ def extract_mathcheck(text):
     return text.strip()
 
 
+def answer_code_to_text(code):
+    code = code.strip().upper()
+
+    if code == "1":
+        return "yes"
+    if code == "0":
+        return "no"
+    if code == "S":
+        return "skipped"
+    if code == "N":
+        return "not attempted"
+
+    return f"unknown ({code})"
+
+
 def decode_mathcheck(raw_text):
     encrypted = extract_mathcheck(raw_text)
     decrypted = pi_decrypt(encrypted)
@@ -49,9 +64,15 @@ def decode_mathcheck(raw_text):
     lines.append("Answers:")
 
     for i, answer in enumerate(answers, start=1):
-        result = "yes" if answer == "1" else "no"
+        result = answer_code_to_text(answer)
         lines.append(f"Question {i}: {result}")
 
+    lines.append("")
+    lines.append("Legend:")
+    lines.append("yes = correct")
+    lines.append("no = wrong after two attempts")
+    lines.append("skipped = student skipped the exercise")
+    lines.append("not attempted = session ended before this exercise")
     lines.append("")
     lines.append("Raw decoded line:")
     lines.append(decrypted)
@@ -63,8 +84,8 @@ class TeacherDecryptApp:
     def __init__(self, root):
         self.root = root
         self.root.title("Teacher Decrypt Tool")
-        self.root.geometry("760x620")
-        self.root.minsize(700, 560)
+        self.root.geometry("760x650")
+        self.root.minsize(700, 580)
         self.root.configure(bg="#f1f5f9")
 
         title = tk.Label(
@@ -135,7 +156,7 @@ class TeacherDecryptApp:
         )
         output_label.pack(anchor="w", padx=45, pady=(18, 5))
 
-        self.output_text = tk.Text(root, height=14, font=("Consolas", 11), wrap="word")
+        self.output_text = tk.Text(root, height=15, font=("Consolas", 11), wrap="word")
         self.output_text.pack(fill="both", expand=True, padx=45, pady=(0, 25))
 
     def open_file(self):

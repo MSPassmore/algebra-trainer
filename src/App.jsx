@@ -204,6 +204,12 @@ export default function App() {
     goToNextQuestion();
   }
 
+  function showWorkedSolution() {
+    updateResult(currentIndex, false);
+    setShowHelp(true);
+    setFeedback("Help used. This exercise is marked as failed.");
+  }
+
   function endSession() {
     setFinished(true);
   }
@@ -256,7 +262,7 @@ export default function App() {
                   Question {currentIndex + 1} of {selectedSet.exercises.length}
                 </h2>
               </div>
-              <button onClick={() => setShowHelp((old) => !old)} style={secondaryButtonStyle}>Help</button>
+              <button onClick={showWorkedSolution} style={secondaryButtonStyle}>Help</button>
             </div>
 
             <div style={{ width: "100%", background: "#e2e8f0", borderRadius: "999px", height: "12px", marginBottom: "32px" }}>
@@ -301,7 +307,9 @@ export default function App() {
             )}
 
             <div style={{ display: "grid", gap: "12px" }}>
-              <button onClick={continueExercise} style={primaryButtonStyle}>Continue</button>
+              <button onClick={showHelp ? goToNextQuestion : continueExercise} style={primaryButtonStyle}>
+                {showHelp ? "Continue to next question" : "Continue"}
+              </button>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <button onClick={skipExercise} style={secondaryWideButtonStyle}>Skip exercise</button>
                 <button onClick={endSession} style={dangerButtonStyle}>End & get results</button>
