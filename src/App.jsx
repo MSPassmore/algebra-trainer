@@ -1,4 +1,6 @@
 import React, { useMemo, useState } from "react";
+import "katex/dist/katex.min.css";
+import katex from "katex";
 
 const PI_DIGITS = "314159265358979323846264338327950288419716939937510";
 
@@ -11,165 +13,74 @@ const exerciseSets = [
       {
         type: "system",
         title: "Question 1",
-        question: String.raw`Solve the system:
-\[
-2x + y = 7
-\]
-\[
-x - y = 1
-\]`,
+        instruction: "Solve the system.",
+        question: "\\begin{aligned}2x + y &= 7 \\\\ x - y &= 1\\end{aligned}",
         fields: ["x", "y"],
         answers: [8 / 3, 5 / 3],
-        solution: String.raw`From \(x-y=1\), we get \(x=y+1\).
-Substitute into \(2x+y=7\):
-\[
-2(y+1)+y=7
-\]
-\[
-3y+2=7
-\]
-\[
-y=\frac{5}{3}
-\]
-Then:
-\[
-x=y+1=\frac{8}{3}
-\]`,
+        solution: "x = \\frac{8}{3}, \\quad y = \\frac{5}{3}",
       },
       {
         type: "system",
         title: "Question 2",
-        question: String.raw`A shop sells pens and notebooks.
-
-2 pens and 1 notebook cost 7 CHF.
-1 pen and 1 notebook cost 4 CHF.
-
-Let \(x\) be the price of one pen and \(y\) the price of one notebook.
-Find \(x\) and \(y\).`,
+        instruction:
+          "A shop sells pens and notebooks. 2 pens and 1 notebook cost 7 CHF. 1 pen and 1 notebook cost 4 CHF. Let x be the price of a pen and y the price of a notebook.",
+        question: "\\begin{aligned}2x + y &= 7 \\\\ x + y &= 4\\end{aligned}",
         fields: ["x", "y"],
         answers: [3, 1],
-        solution: String.raw`The equations are:
-\[
-2x+y=7
-\]
-\[
-x+y=4
-\]
-Subtract the second equation from the first:
-\[
-x=3
-\]
-Then:
-\[
-3+y=4 \Rightarrow y=1
-\]`,
+        solution: "x = 3, \\quad y = 1",
       },
       {
         type: "multi",
         title: "Question 3",
-        question: String.raw`Solve:
-\[
-x^2 - 5x + 6 = 0
-\]`,
+        instruction: "Solve the quadratic equation.",
+        question: "x^2 - 5x + 6 = 0",
         fields: ["x₁", "x₂"],
         answers: [2, 3],
-        solution: String.raw`Factorise:
-\[
-x^2 - 5x + 6 = (x-2)(x-3)
-\]
-So:
-\[
-x=2 \quad \text{or} \quad x=3
-\]`,
+        solution: "x = 2 \\quad \\text{or} \\quad x = 3",
       },
       {
         type: "multi",
         title: "Question 4",
-        question: String.raw`Solve:
-\[
-2x(x-2)+10 = x(x+3)
-\]`,
+        instruction: "Expand first, then solve the quadratic equation.",
+        question: "2x(x-2)+10 = x(x+3)",
         fields: ["x₁", "x₂"],
         answers: [2, 5],
-        solution: String.raw`Expand both sides:
-\[
-2x^2-4x+10 = x^2+3x
-\]
-Bring everything to one side:
-\[
-x^2-7x+10=0
-\]
-Factorise:
-\[
-(x-2)(x-5)=0
-\]
-Therefore:
-\[
-x=2 \quad \text{or} \quad x=5
-\]`,
+        solution: "x = 2 \\quad \\text{or} \\quad x = 5",
       },
       {
         type: "single",
         title: "Question 5",
-        question: String.raw`Solve:
-\[
-\sqrt{x+7}=4
-\]`,
+        instruction: "Solve the root equation.",
+        question: "\\sqrt{x+7}=4",
         fields: ["x"],
         answers: [9],
-        solution: String.raw`Square both sides:
-\[
-x+7=16
-\]
-So:
-\[
-x=9
-\]
-Check:
-\[
-\sqrt{9+7}=4
-\]`,
+        solution: "x = 9",
       },
       {
         type: "single",
         title: "Question 6",
-        question: String.raw`Solve:
-\[
-2^x=16
-\]`,
+        instruction: "Solve the power equation.",
+        question: "2^x = 16",
         fields: ["x"],
         answers: [4],
-        solution: String.raw`Write 16 as a power of 2:
-\[
-16=2^4
-\]
-So:
-\[
-2^x=2^4
-\]
-Therefore:
-\[
-x=4
-\]`,
+        solution: "x = 4",
       },
     ],
   },
 ];
 
-function normaliseMathText(text) {
-  return text
-    .replaceAll("\\[", "")
-    .replaceAll("\\]", "")
-    .replaceAll("\\(", "")
-    .replaceAll("\\)", "")
-    .replaceAll("\\frac{", "")
-    .replaceAll("}{", "/")
-    .replaceAll("}", "")
-    .replaceAll("\\sqrt", "√")
-    .replaceAll("\\quad", "   ")
-    .replaceAll("\\text", "")
-    .replaceAll("\\Rightarrow", "⇒")
-    .replaceAll("\\", "");
+function MathBlock({ math }) {
+  let html;
+  try {
+    html = katex.renderToString(math, {
+      throwOnError: false,
+      displayMode: true,
+    });
+  } catch (error) {
+    html = `<span>${math}</span>`;
+  }
+
+  return <div dangerouslySetInnerHTML={{ __html: html }} />;
 }
 
 function parseInput(value) {
@@ -231,29 +142,13 @@ function makeResultText(setTitle, results) {
   const now = new Date();
   const date = now.toLocaleDateString("en-GB");
   const time = now.toLocaleTimeString("en-GB");
-  const compact = results.map((result) => (result === true ? "1" : "0")).join(",");
-  const plainCheck = `${setTitle}|${date}|${time}|${compact}`;
-  const encrypted = piEncrypt(plainCheck);
+  const compact = results.map((r) => (r ? "1" : "0")).join(",");
+  const plain = `${setTitle}|${date}|${time}|${compact}`;
+  const encrypted = piEncrypt(plain);
 
-  const lines = [
-    "Math Trainer Results",
-    "====================",
-    "",
-    `Date: ${date}`,
-    `Time: ${time}`,
-    `Exercise set: ${setTitle}`,
-    "",
-    "Summary:",
-    ...results.map((result, index) => `Question ${index + 1}: ${result ? "yes" : "no"}`),
-    "",
-    "Encrypted check line:",
-    `MATHCHECK: ${encrypted}`,
-    "",
-    "Plain result format:",
-    "yes = correct, no = wrong",
-  ];
-
-  return lines.join("\n");
+  return `Math Trainer Results\n\nDate: ${date}\nTime: ${time}\nSet: ${setTitle}\n\n${results
+    .map((r, i) => `Question ${i + 1}: ${r ? "yes" : "no"}`)
+    .join("\n")}\n\nMATHCHECK: ${encrypted}`;
 }
 
 function downloadTextFile(filename, content) {
@@ -283,8 +178,8 @@ export default function App() {
   const [feedback, setFeedback] = useState("");
   const [showHelp, setShowHelp] = useState(false);
 
-  const currentExercise = selectedSet.exercises[currentIndex];
   const finished = started && currentIndex >= selectedSet.exercises.length;
+  const currentExercise = finished ? null : selectedSet.exercises[currentIndex];
 
   function startSet() {
     setStarted(true);
@@ -296,8 +191,12 @@ export default function App() {
     setShowHelp(false);
   }
 
-  function updateInput(field, value) {
-    setInputs((old) => ({ ...old, [field]: value }));
+  function nextExercise() {
+    setCurrentIndex((old) => old + 1);
+    setAttempts(0);
+    setInputs({});
+    setFeedback("");
+    setShowHelp(false);
   }
 
   function continueExercise() {
@@ -318,7 +217,7 @@ export default function App() {
     if (correct) {
       setResults((old) => [...old, true]);
       setFeedback("Correct!");
-      setTimeout(() => nextExercise(), 650);
+      setTimeout(nextExercise, 650);
       return;
     }
 
@@ -332,15 +231,7 @@ export default function App() {
     setResults((old) => [...old, false]);
     setFeedback("The solution is shown below. Moving to the next question...");
     setShowHelp(true);
-    setTimeout(() => nextExercise(), 1800);
-  }
-
-  function nextExercise() {
-    setCurrentIndex((old) => old + 1);
-    setAttempts(0);
-    setInputs({});
-    setFeedback("");
-    setShowHelp(false);
+    setTimeout(nextExercise, 1800);
   }
 
   function downloadResults() {
@@ -351,18 +242,18 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 p-6">
-      <div className="max-w-4xl mx-auto">
-        <header className="mb-8 text-center">
-          <h1 className="text-4xl font-bold tracking-tight">Algebra Trainer</h1>
-          <p className="text-slate-600 mt-2">Practise algebra and download your result file.</p>
+    <div style={{ minHeight: "100vh", background: "#f1f5f9", color: "#0f172a", padding: "32px" }}>
+      <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+        <header style={{ textAlign: "center", marginBottom: "32px" }}>
+          <h1 style={{ fontSize: "42px", fontWeight: "800", marginBottom: "8px" }}>Algebra Trainer</h1>
+          <p style={{ color: "#475569" }}>Practise algebra and download your result file.</p>
         </header>
 
         {!started && (
-          <main className="bg-white rounded-3xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold mb-4">Choose an exercise set</h2>
+          <main style={{ background: "white", borderRadius: "28px", padding: "32px", boxShadow: "0 10px 30px rgba(15,23,42,0.12)" }}>
+            <h2 style={{ fontSize: "26px", fontWeight: "700", marginBottom: "16px" }}>Choose an exercise set</h2>
             <select
-              className="w-full border rounded-xl p-3 text-lg mb-6"
+              style={{ width: "100%", border: "1px solid #cbd5e1", borderRadius: "14px", padding: "14px", fontSize: "18px", marginBottom: "24px" }}
               value={selectedSetId}
               onChange={(event) => setSelectedSetId(event.target.value)}
             >
@@ -373,56 +264,46 @@ export default function App() {
               ))}
             </select>
 
-            <div className="border rounded-2xl p-5 mb-6 bg-slate-50">
-              <h3 className="text-xl font-semibold">{selectedSet.title}</h3>
-              <p className="text-slate-600 mt-1">{selectedSet.description}</p>
+            <div style={{ border: "1px solid #e2e8f0", borderRadius: "20px", padding: "20px", marginBottom: "24px", background: "#f8fafc" }}>
+              <h3 style={{ fontSize: "22px", fontWeight: "700" }}>{selectedSet.title}</h3>
+              <p style={{ color: "#475569", marginTop: "4px" }}>{selectedSet.description}</p>
             </div>
 
-            <button
-              onClick={startSet}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-6 py-4 text-lg font-bold shadow"
-            >
-              Start
-            </button>
+            <button onClick={startSet} style={primaryButtonStyle}>Start</button>
           </main>
         )}
 
-        {started && !finished && (
-          <main className="bg-white rounded-3xl shadow-lg p-8">
-            <div className="flex justify-between items-center mb-5 gap-4">
+        {started && !finished && currentExercise && (
+          <main style={{ background: "white", borderRadius: "28px", padding: "32px", boxShadow: "0 10px 30px rgba(15,23,42,0.12)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", gap: "16px" }}>
               <div>
-                <p className="text-sm text-slate-500">{selectedSet.title}</p>
-                <h2 className="text-2xl font-bold">
+                <p style={{ color: "#64748b", fontSize: "14px" }}>{selectedSet.title}</p>
+                <h2 style={{ fontSize: "28px", fontWeight: "800" }}>
                   Question {currentIndex + 1} of {selectedSet.exercises.length}
                 </h2>
               </div>
-              <button
-                onClick={() => setShowHelp((old) => !old)}
-                className="bg-slate-200 hover:bg-slate-300 rounded-xl px-4 py-2 font-semibold"
-              >
-                Help
-              </button>
+              <button onClick={() => setShowHelp((old) => !old)} style={secondaryButtonStyle}>Help</button>
             </div>
 
-            <div className="w-full bg-slate-200 rounded-full h-3 mb-8">
+            <div style={{ width: "100%", background: "#e2e8f0", borderRadius: "999px", height: "12px", marginBottom: "32px" }}>
               <div
-                className="bg-blue-600 h-3 rounded-full transition-all"
-                style={{ width: `${(currentIndex / selectedSet.exercises.length) * 100}%` }}
+                style={{ width: `${(currentIndex / selectedSet.exercises.length) * 100}%`, background: "#2563eb", height: "12px", borderRadius: "999px", transition: "width 0.3s" }}
               />
             </div>
 
-            <section className="bg-slate-50 rounded-2xl p-6 mb-6 whitespace-pre-line text-xl leading-relaxed">
-              {normaliseMathText(currentExercise.question)}
+            <section style={{ background: "#f8fafc", borderRadius: "20px", padding: "24px", marginBottom: "24px", fontSize: "20px" }}>
+              <p style={{ color: "#334155", marginBottom: "16px" }}>{currentExercise.instruction}</p>
+              <MathBlock math={currentExercise.question} />
             </section>
 
-            <section className="grid gap-4 mb-6">
+            <section style={{ display: "grid", gap: "16px", marginBottom: "24px" }}>
               {currentExercise.fields.map((field) => (
-                <label key={field} className="flex items-center gap-4 text-lg">
-                  <span className="w-12 font-bold">{field} =</span>
+                <label key={field} style={{ display: "flex", alignItems: "center", gap: "16px", fontSize: "20px" }}>
+                  <span style={{ width: "56px", fontWeight: "800" }}>{field} =</span>
                   <input
-                    className="border rounded-xl p-3 text-lg flex-1"
+                    style={{ border: "1px solid #cbd5e1", borderRadius: "14px", padding: "14px", fontSize: "20px", flex: 1 }}
                     value={inputs[field] || ""}
-                    onChange={(event) => updateInput(field, event.target.value)}
+                    onChange={(event) => setInputs((old) => ({ ...old, [field]: event.target.value }))}
                     onKeyDown={(event) => {
                       if (event.key === "Enter") continueExercise();
                     }}
@@ -433,65 +314,76 @@ export default function App() {
             </section>
 
             {feedback && (
-              <p
-                className={`font-bold mb-6 ${
-                  feedback.includes("Correct") ? "text-green-600" : "text-red-600"
-                }`}
-              >
+              <p style={{ fontWeight: "800", marginBottom: "24px", color: feedback.includes("Correct") ? "#16a34a" : "#dc2626" }}>
                 {feedback}
               </p>
             )}
 
             {showHelp && (
-              <section className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-6 whitespace-pre-line">
-                <h3 className="font-bold text-lg mb-2">Worked solution</h3>
-                <p>{normaliseMathText(currentExercise.solution)}</p>
+              <section style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "20px", padding: "20px", marginBottom: "24px" }}>
+                <h3 style={{ fontWeight: "800", fontSize: "20px", marginBottom: "8px" }}>Worked solution</h3>
+                <MathBlock math={currentExercise.solution} />
               </section>
             )}
 
-            <button
-              onClick={continueExercise}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-6 py-4 text-lg font-bold shadow"
-            >
-              Continue
-            </button>
+            <button onClick={continueExercise} style={primaryButtonStyle}>Continue</button>
           </main>
         )}
 
         {finished && (
-          <main className="bg-white rounded-3xl shadow-lg p-8">
-            <h2 className="text-3xl font-bold mb-2">Summary</h2>
-            <p className="text-slate-600 mb-6">
+          <main style={{ background: "white", borderRadius: "28px", padding: "32px", boxShadow: "0 10px 30px rgba(15,23,42,0.12)" }}>
+            <h2 style={{ fontSize: "34px", fontWeight: "800", marginBottom: "8px" }}>Summary</h2>
+            <p style={{ color: "#475569", marginBottom: "24px" }}>
               Score: {results.filter(Boolean).length} / {results.length}
             </p>
 
-            <div className="grid gap-3 mb-8">
+            <div style={{ display: "grid", gap: "12px", marginBottom: "32px" }}>
               {results.map((result, index) => (
-                <div key={index} className="flex justify-between border rounded-xl p-4 bg-slate-50">
+                <div key={index} style={{ display: "flex", justifyContent: "space-between", border: "1px solid #e2e8f0", borderRadius: "14px", padding: "16px", background: "#f8fafc" }}>
                   <span>Question {index + 1}</span>
-                  <span className={result ? "text-green-600 font-bold" : "text-red-600 font-bold"}>
+                  <span style={{ color: result ? "#16a34a" : "#dc2626", fontWeight: "800" }}>
                     {result ? "yes" : "no"}
                   </span>
                 </div>
               ))}
             </div>
 
-            <button
-              onClick={downloadResults}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-2xl px-6 py-4 text-lg font-bold shadow mb-4"
-            >
-              Download results
-            </button>
-
-            <button
-              onClick={() => setStarted(false)}
-              className="w-full bg-slate-200 hover:bg-slate-300 text-slate-900 rounded-2xl px-6 py-4 text-lg font-bold"
-            >
-              Back to menu
-            </button>
+            <button onClick={downloadResults} style={{ ...primaryButtonStyle, marginBottom: "16px" }}>Download results</button>
+            <button onClick={() => setStarted(false)} style={secondaryWideButtonStyle}>Back to menu</button>
           </main>
         )}
       </div>
     </div>
   );
 }
+
+const primaryButtonStyle = {
+  width: "100%",
+  background: "#2563eb",
+  color: "white",
+  border: "none",
+  borderRadius: "18px",
+  padding: "18px 24px",
+  fontSize: "20px",
+  fontWeight: "800",
+  cursor: "pointer",
+  boxShadow: "0 6px 18px rgba(37,99,235,0.25)",
+};
+
+const secondaryButtonStyle = {
+  background: "#e2e8f0",
+  color: "#0f172a",
+  border: "none",
+  borderRadius: "14px",
+  padding: "12px 18px",
+  fontSize: "16px",
+  fontWeight: "700",
+  cursor: "pointer",
+};
+
+const secondaryWideButtonStyle = {
+  ...secondaryButtonStyle,
+  width: "100%",
+  padding: "18px 24px",
+  fontSize: "20px",
+};
