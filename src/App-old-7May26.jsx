@@ -222,10 +222,10 @@ export default function App() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f1f5f9", color: "#0f172a", padding: "16px 32px 32px" }}>
+    <div style={{ minHeight: "100vh", background: "#f1f5f9", color: "#0f172a", padding: "32px" }}>
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-        <header style={{ textAlign: "center", marginBottom: "16px" }}>
-          <h1 style={{ fontSize: "38px", fontWeight: "800", marginBottom: "4px" }}>Algebra Trainer</h1>
+        <header style={{ textAlign: "center", marginBottom: "32px" }}>
+          <h1 style={{ fontSize: "42px", fontWeight: "800", marginBottom: "8px" }}>Algebra Trainer</h1>
           <p style={{ color: "#475569" }}>Practise algebra and download your result file.</p>
         </header>
 
@@ -306,12 +306,14 @@ export default function App() {
               </section>
             )}
 
-            <div style={bottomButtonRowStyle}>
-              <button onClick={showHelp ? goToNextQuestion : continueExercise} style={continueButtonStyle}>
+            <div style={{ display: "grid", gap: "12px" }}>
+              <button onClick={showHelp ? goToNextQuestion : continueExercise} style={primaryButtonStyle}>
                 {showHelp ? "Continue to next question" : "Continue"}
               </button>
-              <button onClick={skipExercise} style={skipButtonStyle}>Skip exercise</button>
-              <button onClick={endSession} style={endButtonStyle}>End & get results</button>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <button onClick={skipExercise} style={secondaryWideButtonStyle}>Skip exercise</button>
+                <button onClick={endSession} style={dangerButtonStyle}>End & get results</button>
+              </div>
             </div>
           </main>
         )}
@@ -369,11 +371,9 @@ const selectStyle = {
 const inputStyle = {
   border: "1px solid #cbd5e1",
   borderRadius: "14px",
-  padding: "12px 14px",
+  padding: "14px",
   fontSize: "20px",
-  width: "120px",
-  maxWidth: "120px",
-  textAlign: "center",
+  flex: 1,
 };
 
 const primaryButtonStyle = {
@@ -411,26 +411,4 @@ const dangerButtonStyle = {
   ...secondaryWideButtonStyle,
   background: "#fee2e2",
   color: "#991b1b",
-};
-
-const bottomButtonRowStyle = {
-  display: "flex",
-  gap: "12px",
-  width: "100%",
-};
-
-const continueButtonStyle = {
-  ...primaryButtonStyle,
-  width: "auto",
-  flex: 2,
-};
-
-const skipButtonStyle = {
-  ...secondaryWideButtonStyle,
-  flex: 1,
-};
-
-const endButtonStyle = {
-  ...dangerButtonStyle,
-  flex: 1,
 };
