@@ -226,7 +226,7 @@ export default function App() {
       <div style={{ maxWidth: "900px", margin: "0 auto" }}>
         <header style={{ textAlign: "center", marginBottom: "16px" }}>
           <h1 style={{ fontSize: "38px", fontWeight: "800", marginBottom: "4px" }}>Algebra Trainer</h1>
-          <p style={{ color: "#475569" }}>Practise algebra and download your result file.</p>
+          <p style={{ color: "#475569" }}>Passmore's Math Trainer.</p>
         </header>
 
         {!started && (
